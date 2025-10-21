@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>EnergyShare - Login</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://code.iconify.design/3/3.1.1/iconify.min.js"></script>
+    <style>
+      .hide-scrollbar::-webkit-scrollbar {
+        display: none;
+      }
+      .hide-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+
+      body {
+        background: #f3f4f6;
+        padding: 35px;
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+        min-height: 100vh;
+      }
+
+      .app-shell {
+        width: 375px;
+        height: 812px;
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 4px 18px rgba(15, 23, 42, 0.12);
+        border: 1px solid #e5e7eb;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        animation: fadeIn 0.45s ease;
+      }
+
+      .fixed-section {
+        flex-shrink: 0;
+      }
+
+      .content-section {
+        flex: 1;
+        overflow-y: auto;
+        min-height: 0;
+        padding: 24px;
+        background: #f9fafb;
+      }
+
+      .card {
+        background: white;
+        border-radius: 14px;
+        box-shadow: 0 2px 10px rgba(15, 23, 42, 0.08);
+        padding: 24px;
+        margin-bottom: 18px;
+        position: relative;
+      }
+
+      .primary-btn {
+        background: linear-gradient(135deg, #22c55e, #16a34a);
+        border: none;
+        color: white;
+        font-weight: 600;
+        border-radius: 12px;
+        height: 52px;
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+      }
+
+      .primary-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 8px 20px rgba(34, 197, 94, 0.35);
+      }
+
+      .input-field {
+        width: 100%;
+        padding: 14px 16px;
+        border: 2px solid #e5e7eb;
+        border-radius: 12px;
+        font-size: 15px;
+        color: #1f2937;
+        background: rgba(255, 255, 255, 0.92);
+        transition: border-color 0.3s ease, box-shadow 0.3s ease;
+      }
+
+      .input-field:focus {
+        outline: none;
+        border-color: #22c55e;
+        box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.2);
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(24px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app-shell">
+      <header
+        class="fixed-section h-[56px] flex items-center justify-between px-6 border-b border-gray-200 bg-white"
+      >
+        <div>
+          <p
+            class="text-xs font-semibold text-gray-400 uppercase tracking-[0.28em]"
+          >
+            EnergyShare
+          </p>
+          <h1 class="text-lg font-semibold text-gray-800">Welcome back</h1>
+        </div>
+        <span
+          class="iconify text-2xl text-gray-400"
+          data-icon="solar:shield-check-bold-duotone"
+        ></span>
+      </header>
+
+      <main class="content-section hide-scrollbar">
+        <div
+          class="card bg-gradient-to-r from-emerald-100 via-emerald-200 to-emerald-300 text-emerald-900 overflow-hidden"
+          style="margin-top: 0"
+        >
+          <div
+            class="absolute inset-0 opacity-60"
+            style="
+              background: radial-gradient(
+                circle at top,
+                rgba(134, 239, 172, 0.8) 0%,
+                transparent 65%
+              );
+            "
+          ></div>
+          <div class="relative">
+            <p
+              class="text-sm font-medium uppercase tracking-widest opacity-90 mb-2"
+            >
+              Clean Energy Access
+            </p>
+            <h2 class="text-2xl font-semibold leading-snug mb-3 text-gray-900">
+              Sign in to your smart energy hub
+            </h2>
+            <p class="text-sm text-emerald-900/80 leading-relaxed">
+              Sync consumption insights, community updates, and live market data
+              to stay ahead with cleaner power.
+            </p>
+          </div>
+        </div>
+
+        <form class="card space-y-5" onsubmit="handleLogin(event)">
+          <div class="space-y-2">
+            <label class="text-sm font-semibold text-gray-600">Email</label>
+            <input
+              type="email"
+              class="input-field"
+              id="email"
+              placeholder="name@example.com"
+              required
+            />
+          </div>
+
+          <div class="space-y-2">
+            <label class="text-sm font-semibold text-gray-600">Password</label>
+            <div class="relative">
+              <input
+                type="password"
+                class="input-field pr-12"
+                id="password"
+                placeholder="Enter your password"
+                required
+              />
+              <span
+                class="iconify text-gray-400 text-xl absolute right-4 top-1/2 -translate-y-1/2"
+                data-icon="solar:lock-password-bold"
+              ></span>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between text-sm">
+            <label class="flex items-center gap-2 text-gray-600 select-none">
+              <input
+                type="checkbox"
+                class="w-4 h-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500"
+              />
+              <span>Remember me</span>
+            </label>
+            <a href="#" class="text-emerald-600 font-medium"
+              >Forgot password?</a
+            >
+          </div>
+
+          <button type="submit" class="primary-btn">Log in</button>
+        </form>
+
+        <div class="card">
+          <h3 class="text-base font-semibold text-gray-800 mb-3">
+            Smart energy tips
+          </h3>
+          <ul class="space-y-3 text-sm text-gray-600">
+            <li class="flex items-start gap-3">
+              <span
+                class="iconify text-emerald-500 text-lg mt-[2px]"
+                data-icon="solar:bolt-bold"
+              ></span>
+              Consumer mode unlocks real-time pricing guidance and nearby seller
+              comparisons.
+            </li>
+            <li class="flex items-start gap-3">
+              <span
+                class="iconify text-emerald-500 text-lg mt-[2px]"
+                data-icon="solar:graph-new-bold"
+              ></span>
+              Seller mode supports custom pricing, revenue tracking, and
+              community trading tools.
+            </li>
+          </ul>
+        </div>
+
+        <p class="text-center text-sm text-gray-500">
+          Don't have an account?
+          <a class="text-emerald-600 font-semibold" href="#">Create one</a>
+        </p>
+      </main>
+    </div>
+
+    <script>
+      function handleLogin(event) {
+        event.preventDefault();
+        const email = document.getElementById("email").value;
+        const password = document.getElementById("password").value;
+
+        if (email && password) {
+          window.location.href = "user-type.html";
+        }
+      }
+    </script>
+  </body>
+</html>

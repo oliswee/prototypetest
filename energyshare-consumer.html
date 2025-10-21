@@ -1,0 +1,2181 @@
+# 1. 检查文件是否已添加 git status # 2. 创建第一个提交 git commit -m "Initial
+commit: EnergyShare prototype" # 3. 现在推送到远程 git push -u origin
+main<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>EnergyShare - Consumer Dashboard</title>
+
+    <!-- CSS框架 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 图标库 -->
+    <script src="https://code.iconify.design/3/3.1.1/iconify.min.js"></script>
+    <!-- 图表库 -->
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <!-- 地图库 -->
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <style>
+      .hide-scrollbar::-webkit-scrollbar {
+        display: none;
+      }
+      .hide-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+
+      body {
+        background: #f3f4f6;
+        padding: 35px;
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+        min-height: 100vh;
+      }
+
+      .app-page {
+        width: 375px;
+        height: 812px;
+        display: none;
+        flex-direction: column;
+        border-radius: 16px;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+        background: white;
+        overflow: hidden;
+        border: 1px solid #e5e7eb;
+      }
+
+      .app-page.active {
+        display: flex;
+      }
+
+      .fixed-section {
+        flex-shrink: 0;
+      }
+      .content-section {
+        flex: 1;
+        overflow-y: auto;
+        min-height: 0;
+        padding: 20px;
+      }
+
+      .card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        padding: 20px;
+        margin-bottom: 16px;
+      }
+
+      .primary-btn {
+        background: linear-gradient(135deg, #2563eb, #1d4ed8);
+        border-radius: 24px;
+        height: 48px;
+        color: white;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        border: none;
+        transition: all 0.3s;
+      }
+
+      .primary-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+      }
+
+      .chart-container {
+        height: 180px;
+        position: relative;
+        width: 100%;
+      }
+
+      .nav-active .iconify {
+        color: #2563eb;
+      }
+      .nav-active p {
+        color: #2563eb;
+        font-weight: 600;
+      }
+
+      .map-container {
+        height: 280px;
+        width: 100%;
+        border-radius: 12px;
+        overflow: hidden;
+      }
+
+      .custom-marker {
+        background: #2563eb;
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        border: 3px solid white;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: bold;
+      }
+
+      .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .modal.active {
+        display: flex;
+      }
+
+      .modal-content {
+        background: white;
+        border-radius: 16px;
+        padding: 24px;
+        width: 90%;
+        max-width: 320px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        animation: slideUp 0.3s ease;
+      }
+
+      @keyframes slideUp {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .price-indicator {
+        display: inline-flex;
+        align-items: center;
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 600;
+      }
+
+      .price-down {
+        background: #dbeafe;
+        color: #1d4ed8;
+      }
+
+      .input-field {
+        width: 100%;
+        padding: 12px;
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        font-size: 14px;
+        transition: border-color 0.3s;
+      }
+
+      .input-field:focus {
+        outline: none;
+        border-color: #2563eb;
+      }
+
+      .price-comparison {
+        display: flex;
+        justify-content: space-between;
+        padding: 12px;
+        background: #f9fafb;
+        border-radius: 8px;
+        margin-bottom: 12px;
+      }
+
+      .toggle-switch {
+        position: relative;
+        width: 44px;
+        height: 24px;
+        background: #d1d5db;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: background 0.3s;
+      }
+
+      .toggle-switch.active {
+        background: #2563eb;
+      }
+
+      .toggle-slider {
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        width: 20px;
+        height: 20px;
+        background: white;
+        border-radius: 50%;
+        transition: transform 0.3s;
+      }
+
+      .toggle-switch.active .toggle-slider {
+        transform: translateX(20px);
+      }
+    </style>
+  </head>
+  <body>
+    <!-- 页面1：Home -->
+    <div class="app-page active" data-screen="home">
+      <header
+        class="fixed-section h-[56px] flex items-center px-5 border-b border-gray-200"
+      >
+        <div class="flex items-center">
+          <span
+            class="iconify text-2xl text-blue-600"
+            data-icon="solar:eco-energy-bold"
+          ></span>
+          <h1 class="text-lg font-semibold ml-2">EnergyShare</h1>
+          <span
+            class="ml-2 text-[10px] px-2 py-0.5 rounded-full bg-blue-100 text-blue-700"
+            >Consumer</span
+          >
+        </div>
+      </header>
+
+      <main class="content-section hide-scrollbar">
+        <div class="card mb-4 bg-gradient-to-r from-blue-50 to-indigo-50">
+          <div class="flex justify-between items-center">
+            <div>
+              <p class="text-xs text-gray-600 mb-1">Current Grid Price</p>
+              <p
+                class="text-2xl font-bold text-blue-600"
+                id="current-grid-price"
+              >
+                $0.32/kWh
+              </p>
+            </div>
+            <div class="text-right">
+              <p class="text-xs text-gray-600 mb-1">Best Local Offer</p>
+              <p
+                class="text-2xl font-bold text-emerald-600"
+                id="best-offer-price"
+              >
+                --
+              </p>
+            </div>
+          </div>
+          <div class="mt-3 flex justify-between items-center">
+            <span class="price-indicator price-down">
+              <span class="iconify mr-1" data-icon="ph:arrow-down-bold"></span>
+              12.5% 下浮
+            </span>
+            <button
+              onclick="switchScreen('market')"
+              class="text-sm text-blue-600 font-semibold"
+            >
+              去购买
+            </button>
+          </div>
+        </div>
+
+        <div class="card flex flex-col items-center mb-5">
+          <div class="w-40 h-40" id="home-chart1"></div>
+          <h2 class="text-lg font-semibold mt-3">Usage Breakdown</h2>
+          <p class="text-gray-500 text-sm" id="last-update">Updated just now</p>
+        </div>
+
+        <div class="card grid grid-cols-3 gap-3 mb-5">
+          <div class="flex flex-col items-center">
+            <span
+              class="iconify text-blue-500 text-xl mb-1"
+              data-icon="solar:bolt-bold"
+            ></span>
+            <p class="font-medium" id="daily-usage">18.4 kWh</p>
+            <p class="text-sm text-gray-500 text-center">Today Usage</p>
+          </div>
+          <div class="flex flex-col items-center border-x px-4">
+            <span
+              class="iconify text-emerald-500 text-xl mb-1"
+              data-icon="solar:leaf-bold"
+            ></span>
+            <p class="font-medium" id="renewable-share">64%</p>
+            <p class="text-sm text-gray-500 text-center">Renewables</p>
+          </div>
+          <div class="flex flex-col items-center">
+            <span
+              class="iconify text-indigo-500 text-xl mb-1"
+              data-icon="solar:wallet-bold"
+            ></span>
+            <p class="font-medium" id="budget-remaining">$42.50</p>
+            <p class="text-sm text-gray-500 text-center">Budget Left</p>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="flex justify-between items-center mb-3">
+            <h3 class="font-semibold text-lg">Recent Purchases</h3>
+            <span class="text-xs text-blue-600">Today</span>
+          </div>
+          <div class="space-y-3" id="recent-purchases">
+            <div class="flex justify-between items-center">
+              <div>
+                <p class="font-medium">Eco Village</p>
+                <p class="text-gray-500 text-sm">8.2 kWh @ $0.29</p>
+              </div>
+              <div class="text-right">
+                <p class="font-semibold text-blue-600">-$2.38</p>
+                <p class="text-gray-500 text-xs">2 hours ago</p>
+              </div>
+            </div>
+            <div class="flex justify-between items-center">
+              <div>
+                <p class="font-medium">Brooklyn Microgrid</p>
+                <p class="text-gray-500 text-sm">5.5 kWh @ $0.27</p>
+              </div>
+              <div class="text-right">
+                <p class="font-semibold text-blue-600">-$1.49</p>
+                <p class="text-gray-500 text-xs">Yesterday</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <footer
+        class="fixed-section h-[80px] flex items-center justify-around border-t border-gray-200"
+      >
+        <button
+          type="button"
+          class="flex flex-col items-center nav-btn"
+          data-screen="home"
+        >
+          <span
+            class="iconify text-2xl text-gray-400"
+            data-icon="solar:home-smile-bold"
+          ></span>
+          <p class="text-xs mt-1">Home</p>
+        </button>
+        <button
+          type="button"
+          class="flex flex-col items-center nav-btn"
+          data-screen="market"
+        >
+          <span
+            class="iconify text-2xl text-gray-400"
+            data-icon="solar:shop-bold"
+          ></span>
+          <p class="text-xs mt-1">Market</p>
+        </button>
+        <button
+          type="button"
+          class="flex flex-col items-center nav-btn"
+          data-screen="community"
+        >
+          <span
+            class="iconify text-2xl text-gray-400"
+            data-icon="solar:users-group-rounded-bold"
+          ></span>
+          <p class="text-xs mt-1">Community</p>
+        </button>
+        <button
+          type="button"
+          class="flex flex-col items-center nav-btn"
+          data-screen="billings"
+        >
+          <span
+            class="iconify text-2xl text-gray-400"
+            data-icon="solar:bill-list-bold"
+          ></span>
+          <p class="text-xs mt-1">Billings</p>
+        </button>
+        <button
+          type="button"
+          class="flex flex-col items-center nav-btn"
+          data-screen="profile"
+        >
+          <span
+            class="iconify text-2xl text-gray-400"
+            data-icon="solar:user-bold"
+          ></span>
+          <p class="text-xs mt-1">Profile</p>
+        </button>
+      </footer>
+    </div>
+
+    <!-- 页面2：Marketplace -->
+    <div class="app-page" data-screen="market">
+      <header
+        class="fixed-section h-[56px] flex items-center justify-between px-5 border-b border-gray-200"
+      >
+        <h1 class="text-lg font-semibold">Energy Market</h1>
+        <span
+          class="iconify cursor-pointer hover:text-blue-600"
+          data-icon="solar:magnifer-broken"
+          onclick="toggleSearch()"
+        ></span>
+      </header>
+
+      <main class="content-section hide-scrollbar">
+        <div id="search-bar" class="mb-4" style="display: none">
+          <div class="relative">
+            <input
+              type="text"
+              class="input-field pl-10"
+              placeholder="Search sellers, location, price..."
+              id="market-search"
+            />
+            <span
+              class="iconify absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+              data-icon="solar:magnifer-broken"
+            ></span>
+          </div>
+        </div>
+
+        <div class="card mb-4 bg-gradient-to-r from-blue-50 to-indigo-50">
+          <div style="height: 120px; width: 100%" id="market-price-chart"></div>
+          <div class="flex justify-between items-center text-xs">
+            <div>
+              <p class="text-gray-500">Today's Low</p>
+              <p class="font-bold text-emerald-600">$0.28</p>
+            </div>
+            <div class="text-center">
+              <p class="text-gray-500">Current</p>
+              <p class="font-bold text-blue-600">$0.32</p>
+            </div>
+            <div class="text-right">
+              <p class="text-gray-500">Today's High</p>
+              <p class="font-bold text-red-600">$0.35</p>
+            </div>
+          </div>
+        </div>
+
+        <button
+          onclick="openBuyModal()"
+          class="primary-btn w-full mb-4"
+          type="button"
+        >
+          <span class="iconify mr-2" data-icon="solar:cart-large-bold"></span>
+          Buy Energy Now
+        </button>
+
+        <div class="card mb-4">
+          <div class="flex items-center justify-between mb-2">
+            <h3 class="font-semibold">Nearby Solar Sellers</h3>
+            <button
+              onclick="resetToCurrentLocation()"
+              class="text-xs px-3 py-1 rounded-full bg-blue-100 text-blue-600 font-medium hover:bg-blue-200 transition-colors"
+              type="button"
+            >
+              My Location
+            </button>
+          </div>
+          <div id="marketplace-map" class="map-container"></div>
+        </div>
+
+        <div class="flex justify-between items-center mb-3">
+          <h3 class="font-semibold text-lg">Available Sellers</h3>
+          <div class="flex gap-2">
+            <button
+              onclick="filterSellersView('all')"
+              id="filter-all"
+              class="text-xs px-3 py-1 rounded-full bg-blue-100 text-blue-700 font-medium"
+            >
+              All
+            </button>
+            <button
+              onclick="filterSellersView('nearby')"
+              id="filter-nearby"
+              class="text-xs px-3 py-1 rounded-full bg-gray-100 text-gray-600 font-medium"
+            >
+              Nearby
+            </button>
+            <button
+              onclick="filterSellersView('verified')"
+              id="filter-verified"
+              class="text-xs px-3 py-1 rounded-full bg-gray-100 text-gray-600 font-medium"
+            >
+              Verified
+            </button>
+          </div>
+        </div>
+
+        <div class="space-y-3" id="available-sources">
+          <div
+            class="card hover:shadow-lg transition-shadow cursor-pointer"
+            onclick="showSellerModal(1)"
+            data-seller-id="1"
+            data-distance="0.8"
+            data-verified="true"
+          >
+            <div class="flex">
+              <div class="relative">
+                <img
+                  alt="User avatar"
+                  class="w-12 h-12 rounded-full border-2 border-blue-400"
+                  src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48'%3E%3Crect fill='%232563eb' width='48' height='48'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-size='20' fill='white' font-family='Arial'%3EM%3C/text%3E%3C/svg%3E"
+                />
+                <span
+                  class="absolute -bottom-1 -right-1 bg-emerald-500 rounded-full px-1 text-xs text-white"
+                  >●</span
+                >
+              </div>
+              <div class="ml-3 flex-grow">
+                <div class="flex justify-between">
+                  <h4 class="font-semibold">Michael T.</h4>
+                  <span class="flex items-center text-sm text-orange-500">
+                    <span
+                      class="iconify mr-1"
+                      data-icon="solar:point-on-map-bold"
+                    ></span>
+                    0.8mi
+                  </span>
+                </div>
+                <p class="text-sm text-gray-500">Solar + Battery</p>
+                <div class="flex gap-2 mt-1">
+                  <span
+                    class="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded"
+                    >Verified</span
+                  >
+                  <span
+                    class="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded"
+                    >Fast Delivery</span
+                  >
+                </div>
+              </div>
+            </div>
+            <div class="flex justify-between items-center mt-3">
+              <div>
+                <p class="text-sm text-gray-600">Available Now:</p>
+                <div class="flex items-center gap-2">
+                  <span class="text-lg font-bold text-blue-600">15.2 kWh</span>
+                  <span class="text-sm font-semibold text-emerald-600"
+                    >@ $0.28/kWh</span
+                  >
+                </div>
+                <span
+                  class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full"
+                  >12% below market</span
+                >
+              </div>
+              <button
+                onclick="event.stopPropagation(); showSellerModal(1)"
+                class="bg-blue-600 text-white px-5 py-2 rounded-full hover:bg-blue-700 transition-colors"
+              >
+                <span class="iconify" data-icon="solar:cart-large-bold"></span>
+              </button>
+            </div>
+          </div>
+
+          <div
+            class="card hover:shadow-lg transition-shadow cursor-pointer"
+            onclick="showSellerModal(2)"
+            data-seller-id="2"
+            data-distance="1.2"
+            data-verified="false"
+          >
+            <div class="flex">
+              <div class="relative">
+                <img
+                  alt="User avatar"
+                  class="w-12 h-12 rounded-full border-2 border-blue-400"
+                  src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48'%3E%3Crect fill='%234565f1' width='48' height='48'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-size='20' fill='white' font-family='Arial'%3EE%3C/text%3E%3C/svg%3E"
+                />
+                <span
+                  class="absolute -bottom-1 -right-1 bg-emerald-500 rounded-full px-1 text-xs text-white"
+                  >●</span
+                >
+              </div>
+              <div class="ml-3 flex-grow">
+                <div class="flex justify-between">
+                  <h4 class="font-semibold">Eco Village</h4>
+                  <span class="flex items-center text-sm text-orange-500">
+                    <span
+                      class="iconify mr-1"
+                      data-icon="solar:point-on-map-bold"
+                    ></span>
+                    1.2mi
+                  </span>
+                </div>
+                <p class="text-sm text-gray-500">Community Microgrid</p>
+                <div class="flex gap-2 mt-1">
+                  <span
+                    class="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded"
+                    >Premium</span
+                  >
+                  <span
+                    class="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded"
+                    >24/7 Support</span
+                  >
+                </div>
+              </div>
+            </div>
+            <div class="flex justify-between items-center mt-3">
+              <div>
+                <p class="text-sm text-gray-600">Available Now:</p>
+                <div class="flex items-center gap-2">
+                  <span class="text-lg font-bold text-blue-600">42.8 kWh</span>
+                  <span class="text-sm font-semibold text-emerald-600"
+                    >@ $0.30/kWh</span
+                  >
+                </div>
+                <span
+                  class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full"
+                  >6% below market</span
+                >
+              </div>
+              <button
+                onclick="event.stopPropagation(); showSellerModal(2)"
+                class="bg-blue-600 text-white px-5 py-2 rounded-full hover:bg-blue-700 transition-colors"
+              >
+                <span class="iconify" data-icon="solar:cart-large-bold"></span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <footer
+        class="fixed-section h-[80px] flex items-center justify-around border-t border-gray-200"
+      >
+        <button
+          type="button"
+          class="flex flex-col items-center nav-btn"
+          data-screen="home"
+        >
+          <span
+            class="iconify text-2xl text-gray-400"
+            data-icon="solar:home-smile-bold"
+          ></span>
+          <p class="text-xs mt-1">Home</p>
+        </button>
+        <button
+          type="button"
+          class="flex flex-col items-center nav-btn"
+          data-screen="market"
+        >
+          <span
+            class="iconify text-2xl text-gray-400"
+            data-icon="solar:shop-bold"
+          ></span>
+          <p class="text-xs mt-1">Market</p>
+        </button>
+        <button
+          type="button"
+          class="flex flex-col items-center nav-btn"
+          data-screen="community"
+        >
+          <span
+            class="iconify text-2xl text-gray-400"
+            data-icon="solar:users-group-rounded-bold"
+          ></span>
+          <p class="text-xs mt-1">Community</p>
+        </button>
+        <button
+          type="button"
+          class="flex flex-col items-center nav-btn"
+          data-screen="billings"
+        >
+          <span
+            class="iconify text-2xl text-gray-400"
+            data-icon="solar:bill-list-bold"
+          ></span>
+          <p class="text-xs mt-1">Billings</p>
+        </button>
+        <button
+          type="button"
+          class="flex flex-col items-center nav-btn"
+          data-screen="profile"
+        >
+          <span
+            class="iconify text-2xl text-gray-400"
+            data-icon="solar:user-bold"
+          ></span>
+          <p class="text-xs mt-1">Profile</p>
+        </button>
+      </footer>
+    </div>
+
+    <!-- 页面3：Community -->
+    <div class="app-page" data-screen="community">
+      <header
+        class="fixed-section h-[56px] flex items-center justify-between px-5 border-b border-gray-200"
+      >
+        <div>
+          <h1 class="text-lg font-semibold">Community Impact</h1>
+          <p class="text-xs text-gray-500">Brooklyn Heights, NY</p>
+        </div>
+        <span
+          class="iconify cursor-pointer hover:text-blue-600"
+          data-icon="solar:share-bold"
+        ></span>
+      </header>
+
+      <main class="content-section hide-scrollbar">
+        <div class="card mb-5">
+          <div class="flex justify-between items-center mb-3">
+            <h3 class="font-semibold text-lg">Community Stats</h3>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div
+              class="bg-emerald-50 p-3 rounded-lg flex flex-col items-center"
+            >
+              <span
+                class="iconify text-2xl text-emerald-600"
+                data-icon="solar:bolt-circle-bold"
+              ></span>
+              <div class="mt-1 text-center">
+                <p class="text-2xl font-bold text-emerald-700">142 MWh</p>
+                <p class="text-xs text-emerald-600">Shared Energy</p>
+              </div>
+            </div>
+            <div class="bg-blue-50 p-3 rounded-lg flex flex-col items-center">
+              <span
+                class="iconify text-2xl text-blue-600"
+                data-icon="solar:leaf-bold"
+              ></span>
+              <div class="mt-1 text-center">
+                <p class="text-2xl font-bold text-blue-700">26.5 t</p>
+                <p class="text-xs text-blue-600">CO₂ Saved</p>
+              </div>
+            </div>
+          </div>
+          <div class="mt-3">
+            <div class="chart-container" id="community-chart"></div>
+            <div class="pt-2 border-t border-gray-200 text-center">
+              <p class="text-base font-semibold text-gray-700">
+                Your impact:
+                <span class="text-emerald-700">6.4 MWh purchased clean</span>
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="card mb-5">
+          <div class="flex justify-between items-center mb-3">
+            <h3 class="font-semibold text-lg">Neighborhood Heroes</h3>
+            <button class="text-sm text-blue-600">View All</button>
+          </div>
+          <div class="space-y-3">
+            <div
+              class="flex items-center hover:bg-gray-50 p-2 rounded-lg transition-colors cursor-pointer"
+            >
+              <span
+                class="bg-yellow-100 text-yellow-800 font-bold rounded-full w-8 h-8 flex items-center justify-center mr-3"
+                >🥇</span
+              >
+              <img
+                alt="User avatar"
+                class="w-10 h-10 rounded-full"
+                src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40'%3E%3Crect fill='%232563eb' width='40' height='40'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-size='18' fill='white' font-family='Arial'%3ES%3C/text%3E%3C/svg%3E"
+              />
+              <div class="ml-2 flex-grow">
+                <p class="font-medium">Sarah J.</p>
+                <p class="text-sm text-gray-500">Clean Energy Advocate</p>
+              </div>
+              <div class="text-emerald-600 font-bold">28.4 MWh</div>
+            </div>
+            <div
+              class="flex items-center hover:bg-gray-50 p-2 rounded-lg transition-colors cursor-pointer"
+            >
+              <span
+                class="bg-gray-100 text-gray-800 font-bold rounded-full w-8 h-8 flex items-center justify-center mr-3"
+                >🥈</span
+              >
+              <img
+                alt="User avatar"
+                class="w-10 h-10 rounded-full"
+                src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40'%3E%3Crect fill='%234565f1' width='40' height='40'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-size='18' fill='white' font-family='Arial'%3EA%3C/text%3E%3C/svg%3E"
+              />
+              <div class="ml-2 flex-grow">
+                <p class="font-medium">Alex R.</p>
+                <p class="text-sm text-gray-500">EV Enthusiast</p>
+              </div>
+              <div class="text-emerald-600 font-bold">19.7 MWh</div>
+            </div>
+            <div
+              class="flex items-center hover:bg-gray-50 p-2 rounded-lg transition-colors cursor-pointer"
+            >
+              <span
+                class="bg-orange-100 text-orange-800 font-bold rounded-full w-8 h-8 flex items-center justify-center mr-3"
+                >🥉</span
+              >
+              <img
+                alt="User avatar"
+                class="w-10 h-10 rounded-full"
+                src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40'%3E%3Crect fill='%23f97316' width='40' height='40'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-size='18' fill='white' font-family='Arial'%3ED%3C/text%3E%3C/svg%3E"
+              />
+              <div class="ml-2 flex-grow">
+                <p class="font-medium">Dana W.</p>
+                <p class="text-sm text-gray-500">Solar Supporter</p>
+              </div>
+              <div class="text-emerald-600 font-bold">15.2 MWh</div>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <footer
+        class="fixed-section h-[80px] flex items-center justify-around border-t border-gray-200"
+      >
+        <button
+          type="button"
+          class="flex flex-col items-center nav-btn"
+          data-screen="home"
+        >
+          <span
+            class="iconify text-2xl text-gray-400"
+            data-icon="solar:home-smile-bold"
+          ></span>
+          <p class="text-xs mt-1">Home</p>
+        </button>
+        <button
+          type="button"
+          class="flex flex-col items-center nav-btn"
+          data-screen="market"
+        >
+          <span
+            class="iconify text-2xl text-gray-400"
+            data-icon="solar:shop-bold"
+          ></span>
+          <p class="text-xs mt-1">Market</p>
+        </button>
+        <button
+          type="button"
+          class="flex flex-col items-center nav-btn"
+          data-screen="community"
+        >
+          <span
+            class="iconify text-2xl text-gray-400"
+            data-icon="solar:users-group-rounded-bold"
+          ></span>
+          <p class="text-xs mt-1">Community</p>
+        </button>
+        <button
+          type="button"
+          class="flex flex-col items-center nav-btn"
+          data-screen="billings"
+        >
+          <span
+            class="iconify text-2xl text-gray-400"
+            data-icon="solar:bill-list-bold"
+          ></span>
+          <p class="text-xs mt-1">Billings</p>
+        </button>
+        <button
+          type="button"
+          class="flex flex-col items-center nav-btn"
+          data-screen="profile"
+        >
+          <span
+            class="iconify text-2xl text-gray-400"
+            data-icon="solar:user-bold"
+          ></span>
+          <p class="text-xs mt-1">Profile</p>
+        </button>
+      </footer>
+    </div>
+
+    <!-- 页面4：Billings -->
+    <div class="app-page" data-screen="billings">
+      <header
+        class="fixed-section h-[56px] flex items-center justify-between px-5 border-b border-gray-200"
+      >
+        <h1 class="text-lg font-semibold">Billings & Savings</h1>
+      </header>
+
+      <main class="content-section hide-scrollbar">
+        <div class="card flex flex-col items-center mb-5">
+          <p class="text-gray-500 text-sm">Savings This Month</p>
+          <p class="text-3xl font-bold text-blue-600 mb-2" id="total-savings">
+            $18.72
+          </p>
+          <p
+            class="text-sm font-medium text-gray-600 bg-blue-100 px-3 py-1 rounded-full"
+          >
+            ↑ 8.4% from last month
+          </p>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4 mb-5">
+          <div class="card">
+            <div class="flex items-baseline justify-center gap-2">
+              <span
+                class="iconify text-2xl text-emerald-600"
+                data-icon="solar:arrow-up-bold"
+              ></span>
+              <p class="text-2xl font-bold text-emerald-600" id="total-credits">
+                $12.18
+              </p>
+            </div>
+            <p class="text-sm text-gray-500 text-center mt-2">
+              Rewards & Credits
+            </p>
+          </div>
+          <div class="card">
+            <div class="flex items-baseline justify-center gap-2">
+              <span
+                class="iconify text-2xl text-orange-600"
+                data-icon="solar:arrow-down-bold"
+              ></span>
+              <p class="text-2xl font-bold text-orange-600" id="total-expense">
+                $34.95
+              </p>
+            </div>
+            <p class="text-sm text-gray-500 text-center mt-2">Energy Spend</p>
+          </div>
+        </div>
+
+        <div class="card mb-5">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="font-semibold text-lg">Monthly Spend vs Savings</h3>
+            <span class="text-xs text-gray-400">Last 6 months</span>
+          </div>
+          <div class="h-44" id="billing-bar-chart"></div>
+          <div class="flex justify-center gap-3 mt-4">
+            <button
+              type="button"
+              class="billing-legend-btn text-xs px-3 py-1 rounded-full bg-blue-100 text-blue-700 font-medium"
+              data-billing-series="Spent"
+            >
+              Spent
+            </button>
+            <button
+              type="button"
+              class="billing-legend-btn text-xs px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 font-medium"
+              data-billing-series="Saved"
+            >
+              Saved
+            </button>
+          </div>
+        </div>
+
+        <h3 class="font-semibold text-lg mb-3">Purchase History</h3>
+        <div class="space-y-2" id="transaction-history">
+          <div class="card">
+            <div class="flex items-center">
+              <div
+                class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center mr-3"
+              >
+                <span
+                  class="iconify text-blue-600"
+                  data-icon="solar:cart-large-bold"
+                ></span>
+              </div>
+              <div class="flex-grow">
+                <p class="font-medium">Michael T.</p>
+                <p class="text-sm text-gray-500">Today • 6.2 kWh</p>
+              </div>
+              <div class="text-right">
+                <p class="font-semibold text-blue-600">-$1.74</p>
+                <p class="text-gray-500 text-xs">Saved $0.42</p>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="flex items-center">
+              <div
+                class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center mr-3"
+              >
+                <span
+                  class="iconify text-blue-600"
+                  data-icon="solar:cart-large-bold"
+                ></span>
+              </div>
+              <div class="flex-grow">
+                <p class="font-medium">Eco Village</p>
+                <p class="text-sm text-gray-500">Mar 15 • 9.5 kWh</p>
+              </div>
+              <div class="text-right">
+                <p class="font-semibold text-blue-600">-$2.71</p>
+                <p class="text-gray-500 text-xs">Saved $0.58</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <footer
+        class="fixed-section h-[80px] flex items-center justify-around border-t border-gray-200"
+      >
+        <button
+          type="button"
+          class="flex flex-col items-center nav-btn"
+          data-screen="home"
+        >
+          <span
+            class="iconify text-2xl text-gray-400"
+            data-icon="solar:home-smile-bold"
+          ></span>
+          <p class="text-xs mt-1">Home</p>
+        </button>
+        <button
+          type="button"
+          class="flex flex-col items-center nav-btn"
+          data-screen="market"
+        >
+          <span
+            class="iconify text-2xl text-gray-400"
+            data-icon="solar:shop-bold"
+          ></span>
+          <p class="text-xs mt-1">Market</p>
+        </button>
+        <button
+          type="button"
+          class="flex flex-col items-center nav-btn"
+          data-screen="community"
+        >
+          <span
+            class="iconify text-2xl text-gray-400"
+            data-icon="solar:users-group-rounded-bold"
+          ></span>
+          <p class="text-xs mt-1">Community</p>
+        </button>
+        <button
+          type="button"
+          class="flex flex-col items-center nav-btn"
+          data-screen="billings"
+        >
+          <span
+            class="iconify text-2xl text-gray-400"
+            data-icon="solar:bill-list-bold"
+          ></span>
+          <p class="text-xs mt-1">Billings</p>
+        </button>
+        <button
+          type="button"
+          class="flex flex-col items-center nav-btn"
+          data-screen="profile"
+        >
+          <span
+            class="iconify text-2xl text-gray-400"
+            data-icon="solar:user-bold"
+          ></span>
+          <p class="text-xs mt-1">Profile</p>
+        </button>
+      </footer>
+    </div>
+
+    <!-- 页面5：Profile -->
+    <div class="app-page" data-screen="profile">
+      <header
+        class="fixed-section h-[56px] flex items-center justify-between px-5 border-b border-gray-200"
+      >
+        <h1 class="text-lg font-semibold">My Profile</h1>
+        <span
+          class="iconify cursor-pointer hover:text-blue-600"
+          data-icon="solar:pen-new-square-bold"
+        ></span>
+      </header>
+
+      <main class="content-section hide-scrollbar">
+        <div class="card text-center mb-5">
+          <div class="flex justify-center">
+            <div class="relative">
+              <img
+                alt="User avatar"
+                class="w-20 h-20 rounded-full border-2 border-blue-400 mx-auto"
+                src="https://i.pravatar.cc/150?img=32"
+              />
+              <span
+                class="absolute bottom-0 right-0 bg-blue-500 rounded-full p-1 border-2 border-white"
+              >
+                <span
+                  class="iconify text-white"
+                  data-icon="solar:shield-check-bold"
+                ></span>
+              </span>
+            </div>
+          </div>
+          <h2 class="text-xl font-bold mt-3">Emily Carter</h2>
+          <p class="text-gray-600">Smart Consumer</p>
+          <div class="mt-2 flex justify-center">
+            <span
+              class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full mr-2 text-sm"
+              >EV Owner</span
+            >
+            <span
+              class="bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full text-sm"
+              >Green Plan</span
+            >
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3 mb-5">
+          <div class="card text-center p-3">
+            <p class="text-2xl font-bold text-blue-600">68</p>
+            <p class="text-xs text-gray-500">Purchases</p>
+          </div>
+          <div class="card text-center p-3">
+            <p class="text-2xl font-bold text-emerald-600">11</p>
+            <p class="text-xs text-gray-500">Months Active</p>
+          </div>
+        </div>
+
+        <div class="space-y-4">
+          <div>
+            <h3 class="font-semibold text-lg mb-2">Usage Preferences</h3>
+            <div class="card">
+              <div class="flex justify-between items-center py-3">
+                <div class="flex items-center">
+                  <span
+                    class="iconify text-xl text-gray-600 mr-3"
+                    data-icon="solar:bolt-bold"
+                  ></span>
+                  <p class="font-medium">Budget Alerts</p>
+                </div>
+                <div class="toggle-switch active" onclick="toggleSwitch(this)">
+                  <div class="toggle-slider"></div>
+                </div>
+              </div>
+              <div
+                class="flex justify-between items-center py-3 border-t border-gray-100"
+              >
+                <div class="flex items-center">
+                  <span
+                    class="iconify text-xl text-gray-600 mr-3"
+                    data-icon="solar:calendar-bold"
+                  ></span>
+                  <p class="font-medium">Auto Top-up</p>
+                </div>
+                <div class="toggle-switch" onclick="toggleSwitch(this)">
+                  <div class="toggle-slider"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <h3 class="font-semibold text-lg mb-2">Privacy & Security</h3>
+            <div class="card">
+              <div class="flex justify-between items-center py-3">
+                <div class="flex items-center">
+                  <span
+                    class="iconify text-xl text-gray-600 mr-3"
+                    data-icon="solar:share-bold"
+                  ></span>
+                  <p class="font-medium">Share Usage Data</p>
+                </div>
+                <div class="toggle-switch" onclick="toggleSwitch(this)">
+                  <div class="toggle-slider"></div>
+                </div>
+              </div>
+              <div
+                class="flex justify-between items-center py-3 border-t border-gray-100"
+              >
+                <div class="flex items-center">
+                  <span
+                    class="iconify text-xl text-gray-600 mr-3"
+                    data-icon="solar:shield-check-bold"
+                  ></span>
+                  <p class="font-medium">Two-factor Login</p>
+                </div>
+                <div class="toggle-switch active" onclick="toggleSwitch(this)">
+                  <div class="toggle-slider"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <h3 class="font-semibold text-lg mb-2">Notifications</h3>
+            <div class="card">
+              <div class="flex justify-between items-center py-3">
+                <div class="flex items-center">
+                  <span
+                    class="iconify text-xl text-gray-600 mr-3"
+                    data-icon="solar:bell-bold"
+                  ></span>
+                  <p class="font-medium">Push Notifications</p>
+                </div>
+                <div class="toggle-switch active" onclick="toggleSwitch(this)">
+                  <div class="toggle-slider"></div>
+                </div>
+              </div>
+              <div
+                class="flex justify-between items-center py-3 border-t border-gray-100"
+              >
+                <div class="flex items-center">
+                  <span
+                    class="iconify text-xl text-gray-600 mr-3"
+                    data-icon="solar:letter-bold"
+                  ></span>
+                  <p class="font-medium">Email Updates</p>
+                </div>
+                <div class="toggle-switch" onclick="toggleSwitch(this)">
+                  <div class="toggle-slider"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <footer
+        class="fixed-section h-[80px] flex items-center justify-around border-t border-gray-200"
+      >
+        <button
+          type="button"
+          class="flex flex-col items-center nav-btn"
+          data-screen="home"
+        >
+          <span
+            class="iconify text-2xl text-gray-400"
+            data-icon="solar:home-smile-bold"
+          ></span>
+          <p class="text-xs mt-1">Home</p>
+        </button>
+        <button
+          type="button"
+          class="flex flex-col items-center nav-btn"
+          data-screen="market"
+        >
+          <span
+            class="iconify text-2xl text-gray-400"
+            data-icon="solar:shop-bold"
+          ></span>
+          <p class="text-xs mt-1">Market</p>
+        </button>
+        <button
+          type="button"
+          class="flex flex-col items-center nav-btn"
+          data-screen="community"
+        >
+          <span
+            class="iconify text-2xl text-gray-400"
+            data-icon="solar:users-group-rounded-bold"
+          ></span>
+          <p class="text-xs mt-1">Community</p>
+        </button>
+        <button
+          type="button"
+          class="flex flex-col items-center nav-btn"
+          data-screen="billings"
+        >
+          <span
+            class="iconify text-2xl text-gray-400"
+            data-icon="solar:bill-list-bold"
+          ></span>
+          <p class="text-xs mt-1">Billings</p>
+        </button>
+        <button
+          type="button"
+          class="flex flex-col items-center nav-btn"
+          data-screen="profile"
+        >
+          <span
+            class="iconify text-2xl text-gray-400"
+            data-icon="solar:user-bold"
+          ></span>
+          <p class="text-xs mt-1">Profile</p>
+        </button>
+      </footer>
+    </div>
+
+    <!-- 购买能源弹窗 -->
+    <div id="buyModal" class="modal">
+      <div class="modal-content" style="max-width: 400px">
+        <h3 class="text-lg font-bold mb-4">Buy Solar Energy</h3>
+        <div class="mb-4">
+          <label class="text-sm text-gray-600 mb-2 block">Amount (kWh)</label>
+          <input
+            type="number"
+            class="input-field"
+            id="buy-amount"
+            value="10"
+            step="0.1"
+            min="0.1"
+          />
+        </div>
+        <div class="mb-4">
+          <label class="text-sm text-gray-600 mb-2 block"
+            >Price Range ($/kWh)</label
+          >
+          <div class="grid grid-cols-2 gap-2">
+            <input
+              type="number"
+              class="input-field"
+              id="price-min"
+              placeholder="Min"
+              value="0.20"
+              step="0.01"
+            />
+            <input
+              type="number"
+              class="input-field"
+              id="price-max"
+              placeholder="Max"
+              value="0.35"
+              step="0.01"
+            />
+          </div>
+        </div>
+        <div class="mb-4">
+          <label class="text-sm text-gray-600 mb-2 block"
+            >Available Sellers (sorted by distance)</label
+          >
+          <div
+            id="seller-list"
+            class="space-y-2 max-h-48 overflow-y-auto"
+          ></div>
+        </div>
+        <div
+          id="selected-seller"
+          class="price-comparison mb-4"
+          style="display: none"
+        >
+          <div>
+            <p class="text-sm text-gray-600">Estimated Cost</p>
+            <p class="text-xl font-bold text-blue-600" id="buy-total-cost">
+              $0.00
+            </p>
+          </div>
+          <div class="text-right">
+            <p class="text-sm text-gray-600">Vs Grid Price</p>
+            <p class="text-xl font-bold text-emerald-600" id="buy-savings">
+              $0.00 saved
+            </p>
+          </div>
+        </div>
+        <div class="flex gap-3">
+          <button
+            onclick="closeBuyModal()"
+            class="flex-1 py-3 rounded-lg border border-gray-300 font-semibold hover:bg-gray-50 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            id="confirm-buy-btn"
+            onclick="confirmBuy()"
+            class="flex-1 py-3 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 transition-colors"
+            disabled
+          >
+            Select a Seller
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 卖家详情弹窗 -->
+    <div id="sellerModal" class="modal">
+      <div class="modal-content" style="max-width: 380px">
+        <div class="flex justify-between items-start mb-4">
+          <div>
+            <h3 class="text-lg font-bold" id="seller-modal-name">Michael T.</h3>
+            <p class="text-sm text-gray-500" id="seller-modal-type">
+              Solar + Battery
+            </p>
+          </div>
+          <button
+            onclick="closeSellerModal()"
+            class="text-gray-400 hover:text-gray-600"
+          >
+            <span
+              class="iconify text-xl"
+              data-icon="solar:close-circle-bold"
+            ></span>
+          </button>
+        </div>
+        <div class="space-y-3 mb-4">
+          <div
+            class="flex justify-between items-center p-3 bg-gray-50 rounded-lg"
+          >
+            <span class="text-sm text-gray-600">Distance</span>
+            <span class="font-semibold" id="seller-modal-distance">0.8 mi</span>
+          </div>
+          <div
+            class="flex justify-between items-center p-3 bg-gray-50 rounded-lg"
+          >
+            <span class="text-sm text-gray-600">Price</span>
+            <span class="font-semibold text-blue-600" id="seller-modal-price"
+              >$0.28/kWh</span
+            >
+          </div>
+          <div
+            class="flex justify-between items-center p-3 bg-gray-50 rounded-lg"
+          >
+            <span class="text-sm text-gray-600">Available</span>
+            <span
+              class="font-semibold text-emerald-600"
+              id="seller-modal-available"
+              >15.2 kWh</span
+            >
+          </div>
+          <div
+            class="flex justify-between items-center p-3 bg-blue-50 rounded-lg"
+          >
+            <span class="text-sm text-gray-600">Vs Grid</span>
+            <span class="font-bold text-blue-600" id="seller-modal-advantage"
+              >12% below</span
+            >
+          </div>
+        </div>
+        <div class="flex gap-2 mb-4" id="seller-modal-badges">
+          <span class="text-xs bg-blue-100 text-blue-700 px-3 py-1 rounded-full"
+            >Verified</span
+          >
+          <span
+            class="text-xs bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full"
+            >Fast Delivery</span
+          >
+        </div>
+        <div class="mb-4">
+          <label class="text-sm text-gray-600 mb-2 block">Amount (kWh)</label>
+          <input
+            type="number"
+            class="input-field"
+            id="seller-buy-amount"
+            value="5"
+            step="0.1"
+            min="0.1"
+            oninput="updateSellerPurchaseDetails()"
+          />
+        </div>
+        <div class="price-comparison mb-4">
+          <div>
+            <p class="text-sm text-gray-600">Estimated Cost</p>
+            <p class="text-xl font-bold text-blue-600" id="seller-buy-total">
+              $0.00
+            </p>
+          </div>
+          <div class="text-right">
+            <p class="text-sm text-gray-600">Vs Grid Price</p>
+            <p
+              class="text-xl font-bold text-emerald-600"
+              id="seller-buy-savings"
+            >
+              $0.00 saved
+            </p>
+          </div>
+        </div>
+        <div class="flex gap-3">
+          <button
+            type="button"
+            onclick="closeSellerModal()"
+            class="flex-1 py-3 rounded-lg border border-gray-300 font-semibold hover:bg-gray-50 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onclick="buyFromSeller()"
+            class="flex-1 py-3 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 transition-colors"
+          >
+            Confirm Purchase
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const userLocation = { lat: 40.7128, lng: -74.006 };
+      let marketMap;
+      let selectedSeller = null;
+      let mapMarkers = [];
+      let billingBarChartInstance = null;
+      let marketPriceChartInstance = null;
+      let communityChartInstance = null;
+      let currentSellerId = null;
+      const currentGridPrice = 0.32;
+
+      const sellers = [
+        {
+          id: 1,
+          name: "Michael T.",
+          distance: 0.8,
+          price: 0.28,
+          available: 15.2,
+          type: "Solar + Battery",
+          verified: true,
+          tags: ["Verified", "Fast Delivery"],
+          lat: 40.7128,
+          lng: -74.006,
+        },
+        {
+          id: 2,
+          name: "Eco Village",
+          distance: 1.2,
+          price: 0.3,
+          available: 42.8,
+          type: "Community Solar",
+          verified: false,
+          tags: ["Premium", "24/7 Support"],
+          lat: 40.7308,
+          lng: -73.9973,
+        },
+      ];
+
+      document.addEventListener("DOMContentLoaded", () => {
+        initCharts();
+        initMarketplaceMap();
+        filterSellersView("all");
+
+        const gridPriceEl = document.getElementById("current-grid-price");
+        if (gridPriceEl) {
+          gridPriceEl.textContent = `$${currentGridPrice.toFixed(2)}/kWh`;
+        }
+        const bestOfferEl = document.getElementById("best-offer-price");
+        if (bestOfferEl && sellers.length) {
+          const bestOffer = Math.min(...sellers.map((s) => s.price));
+          bestOfferEl.textContent = `$${bestOffer.toFixed(2)}/kWh`;
+        }
+
+        document.querySelectorAll(".nav-btn").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            const target = btn.dataset.screen;
+            if (target) {
+              switchScreen(target);
+            }
+          });
+        });
+
+        switchScreen("home");
+
+        const buyInputs = [
+          document.getElementById("buy-amount"),
+          document.getElementById("price-min"),
+          document.getElementById("price-max"),
+        ];
+        buyInputs.forEach((input) => {
+          input?.addEventListener("input", () => {
+            filterSellers();
+            if (selectedSeller) {
+              const exists = sellers.find((s) => s.id === selectedSeller.id);
+              if (exists) {
+                selectSeller(selectedSeller.id);
+              }
+            }
+          });
+        });
+
+        setTimeout(() => {
+          if (marketMap) {
+            marketMap.invalidateSize();
+          }
+          window.dispatchEvent(new Event("resize"));
+        }, 800);
+      });
+
+      function switchScreen(screen) {
+        document.querySelectorAll(".app-page").forEach((page) => {
+          if (page.dataset.screen === screen) {
+            page.classList.add("active");
+          } else {
+            page.classList.remove("active");
+          }
+        });
+
+        document.querySelectorAll(".nav-btn").forEach((btn) => {
+          const isActive = btn.dataset.screen === screen;
+          btn.classList.toggle("nav-active", isActive);
+
+          const icon = btn.querySelector(".iconify");
+          if (icon) {
+            icon.classList.toggle("text-blue-500", isActive);
+            icon.classList.toggle("text-gray-400", !isActive);
+          }
+        });
+
+        const activePage = document.querySelector(
+          `.app-page[data-screen="${screen}"]`
+        );
+        const scrollable = activePage?.querySelector(".content-section");
+        scrollable?.scrollTo(0, 0);
+
+        if (screen === "market") {
+          setTimeout(() => {
+            marketMap?.invalidateSize();
+            marketPriceChartInstance?.resize();
+          }, 200);
+        } else if (screen === "community") {
+          setTimeout(() => communityChartInstance?.resize(), 200);
+        } else if (screen === "billings") {
+          setTimeout(() => billingBarChartInstance?.resize(), 200);
+        }
+
+        setTimeout(() => window.dispatchEvent(new Event("resize")), 200);
+      }
+
+      function initCharts() {
+        const homeChartEl = document.getElementById("home-chart1");
+        if (homeChartEl) {
+          const homeChart = echarts.init(homeChartEl);
+          homeChart.setOption({
+            tooltip: { trigger: "item" },
+            series: [
+              {
+                name: "Usage Breakdown",
+                type: "pie",
+                radius: ["70%", "90%"],
+                avoidLabelOverlap: false,
+                itemStyle: { borderColor: "#fff", borderWidth: 2 },
+                label: { show: false },
+                labelLine: { show: false },
+                data: [
+                  { value: 55, name: "Home", itemStyle: { color: "#2563eb" } },
+                  { value: 25, name: "EV", itemStyle: { color: "#10b981" } },
+                  {
+                    value: 20,
+                    name: "Storage",
+                    itemStyle: { color: "#f97316" },
+                  },
+                ],
+              },
+            ],
+          });
+        }
+
+        const marketPriceEl = document.getElementById("market-price-chart");
+        if (marketPriceEl) {
+          const marketPriceChart = echarts.init(marketPriceEl);
+          marketPriceChartInstance = marketPriceChart;
+          marketPriceChart.setOption({
+            grid: { left: "6%", right: "6%", top: 10, bottom: 5 },
+            tooltip: {
+              trigger: "axis",
+              formatter: (params) => {
+                const point = params[0];
+                return `${point.axisValue}<br/>$${point.data.toFixed(
+                  2
+                )} per kWh`;
+              },
+              backgroundColor: "rgba(17,24,39,0.85)",
+              borderWidth: 0,
+              textStyle: { color: "#f9fafb" },
+            },
+            xAxis: {
+              type: "category",
+              show: false,
+              data: ["6AM", "8AM", "10AM", "12PM", "2PM", "4PM", "Now"],
+            },
+            yAxis: {
+              type: "value",
+              show: false,
+              min: 0.26,
+              max: 0.36,
+            },
+            series: [
+              {
+                data: [0.28, 0.29, 0.31, 0.35, 0.33, 0.34, 0.32],
+                type: "line",
+                smooth: true,
+                symbol: "circle",
+                symbolSize: 4,
+                itemStyle: { color: "#2563eb" },
+                lineStyle: { color: "#2563eb", width: 2 },
+                areaStyle: {
+                  color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                    { offset: 0, color: "rgba(37, 99, 235, 0.2)" },
+                    { offset: 1, color: "rgba(37, 99, 235, 0.05)" },
+                  ]),
+                },
+                markPoint: {
+                  symbol: "circle",
+                  symbolSize: 40,
+                  label: {
+                    color: "#0f172a",
+                    fontWeight: "600",
+                    formatter: (params) => {
+                      if (params.name === "Current") return "Now";
+                      return params.name;
+                    },
+                  },
+                  data: [
+                    { type: "min", name: "Low" },
+                    { type: "max", name: "High" },
+                    { coord: ["Now", 0.32], name: "Current" },
+                  ],
+                },
+              },
+            ],
+          });
+        }
+
+        const communityChartEl = document.getElementById("community-chart");
+        if (communityChartEl) {
+          const communityChart = echarts.init(communityChartEl);
+          communityChartInstance = communityChart;
+          communityChart.setOption({
+            grid: { left: "6%", right: "4%", top: "12%", bottom: "18%" },
+            xAxis: {
+              type: "category",
+              data: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
+              axisLine: { show: false },
+              axisTick: { show: false },
+            },
+            yAxis: {
+              type: "value",
+              axisLine: { show: false },
+              splitLine: { lineStyle: { type: "dashed" } },
+            },
+            series: [
+              {
+                data: [8, 11, 14, 18, 21, 24],
+                type: "line",
+                smooth: true,
+                symbolSize: 8,
+                itemStyle: { color: "#10b981" },
+                lineStyle: { width: 3 },
+              },
+            ],
+          });
+        }
+
+        const billingBarEl = document.getElementById("billing-bar-chart");
+        if (billingBarEl) {
+          billingBarChartInstance = echarts.init(billingBarEl);
+          billingBarChartInstance.setOption({
+            grid: { left: "6%", right: "6%", top: "12%", bottom: "12%" },
+            tooltip: { trigger: "axis", axisPointer: { type: "shadow" } },
+            legend: { show: false, data: ["Spent", "Saved"] },
+            xAxis: {
+              type: "category",
+              data: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
+              axisTick: { alignWithLabel: true },
+            },
+            yAxis: {
+              type: "value",
+              axisLine: { show: false },
+              splitLine: { lineStyle: { type: "dashed" } },
+            },
+            series: [
+              {
+                name: "Spent",
+                type: "bar",
+                data: [36, 34, 38, 35, 33, 31],
+                barWidth: "35%",
+                itemStyle: { color: "#2563eb", borderRadius: [6, 6, 0, 0] },
+              },
+              {
+                name: "Saved",
+                type: "bar",
+                data: [10, 11, 12, 13, 14, 15],
+                barWidth: "35%",
+                itemStyle: { color: "#10b981", borderRadius: [6, 6, 0, 0] },
+              },
+            ],
+          });
+
+          document.querySelectorAll(".billing-legend-btn").forEach((btn) => {
+            btn.addEventListener("click", function () {
+              if (!billingBarChartInstance) {
+                return;
+              }
+              const seriesName = this.dataset.billingSeries;
+              billingBarChartInstance.dispatchAction({
+                type: "legendToggleSelect",
+                name: seriesName,
+              });
+              this.classList.toggle("opacity-50");
+            });
+          });
+        }
+      }
+
+      function initMarketplaceMap() {
+        marketMap = L.map("marketplace-map").setView(
+          [userLocation.lat, userLocation.lng],
+          13
+        );
+
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          attribution: "© OpenStreetMap",
+        }).addTo(marketMap);
+
+        if (mapMarkers.length) {
+          mapMarkers.forEach(({ marker }) => {
+            if (marketMap && marker) {
+              marketMap.removeLayer(marker);
+            }
+          });
+        }
+        mapMarkers = [];
+
+        const currentLocationMarker = L.circleMarker(
+          [userLocation.lat, userLocation.lng],
+          {
+            radius: 10,
+            color: "#111827",
+            weight: 3,
+            fillColor: "#000000",
+            fillOpacity: 1,
+          }
+        )
+          .addTo(marketMap)
+          .bindPopup("You are here");
+
+        currentLocationMarker.openPopup();
+
+        sellers.forEach((seller) => {
+          if (!seller.lat || !seller.lng) {
+            return;
+          }
+
+          const matchingCard = document.querySelector(
+            `#available-sources [data-seller-id="${seller.id}"]`
+          );
+          if (!matchingCard) {
+            return;
+          }
+
+          const markerColor = seller.verified ? "#2563EB" : "#60A5FA";
+          const marker = L.marker([seller.lat, seller.lng], {
+            icon: L.divIcon({
+              className: "custom-marker",
+              html: `<div style="background: ${markerColor}; width: 30px; height: 30px; border-radius: 50%; border: 3px solid white; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; box-shadow: 0 2px 8px rgba(0,0,0,0.3);">⚡</div>`,
+              iconSize: [30, 30],
+            }),
+          }).addTo(marketMap);
+
+          marker.bindPopup(`
+            <div style="padding: 8px;">
+              <strong>${seller.name}</strong><br>
+              ${seller.available} kWh available<br>
+              Price: $${seller.price.toFixed(2)}/kWh
+              <button onclick="showSellerModal(${
+                seller.id
+              }); return false;" style="margin-top: 8px; background: ${markerColor}; color: white; padding: 4px 12px; border-radius: 4px; border: none; cursor: pointer;">View Details</button>
+            </div>
+          `);
+
+          mapMarkers.push({ marker, seller });
+        });
+      }
+
+      function resetToCurrentLocation() {
+        if (!marketMap) {
+          return;
+        }
+        marketMap.setView([userLocation.lat, userLocation.lng], 14, {
+          animate: true,
+        });
+      }
+
+      function openBuyModal() {
+        document.getElementById("buyModal").classList.add("active");
+        selectedSeller = null;
+        document.getElementById("selected-seller").style.display = "none";
+        const confirmBtn = document.getElementById("confirm-buy-btn");
+        confirmBtn.disabled = true;
+        confirmBtn.textContent = "Select a Seller";
+        filterSellers();
+      }
+
+      function closeBuyModal() {
+        document.getElementById("buyModal").classList.remove("active");
+      }
+
+      function confirmBuy() {
+        if (!selectedSeller) {
+          alert("Please select a seller first!");
+          return;
+        }
+        const amount = document.getElementById("buy-amount").value;
+        const cost = document.getElementById("buy-total-cost").textContent;
+        closeBuyModal();
+        alert(
+          `✅ Purchase confirmed!\n${amount} kWh from ${selectedSeller.name}\nTotal: ${cost}`
+        );
+      }
+
+      function filterSellers() {
+        const amount = parseFloat(
+          document.getElementById("buy-amount")?.value || 10
+        );
+        const minPrice = parseFloat(
+          document.getElementById("price-min")?.value || 0
+        );
+        const maxPrice = parseFloat(
+          document.getElementById("price-max")?.value || 1
+        );
+
+        const filtered = sellers
+          .filter(
+            (s) =>
+              s.price >= minPrice &&
+              s.price <= maxPrice &&
+              s.available >= amount
+          )
+          .sort((a, b) => a.distance - b.distance);
+
+        const listContainer = document.getElementById("seller-list");
+        if (!filtered.length) {
+          listContainer.innerHTML =
+            '<p class="text-sm text-gray-500 text-center py-4">No sellers match your criteria</p>';
+          return;
+        }
+
+        listContainer.innerHTML = filtered
+          .map(
+            (seller) => `
+          <div 
+            class="p-3 border-2 border-gray-200 rounded-lg hover:border-blue-500 cursor-pointer transition-colors seller-card"
+            onclick="selectSeller(${seller.id})"
+            data-seller-id="${seller.id}"
+          >
+            <div class="flex justify-between items-start mb-2">
+              <div>
+                <p class="font-semibold">${seller.name}</p>
+                <p class="text-xs text-gray-500">${seller.type}</p>
+              </div>
+              <span class="text-xs text-orange-500">📍 ${
+                seller.distance
+              }mi</span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-sm font-bold text-blue-600">$${seller.price.toFixed(
+                2
+              )}/kWh</span>
+              <span class="text-xs text-emerald-600">${
+                seller.available
+              } kWh available</span>
+            </div>
+          </div>
+        `
+          )
+          .join("");
+      }
+
+      function selectSeller(sellerId) {
+        selectedSeller = sellers.find((s) => s.id === sellerId) || null;
+        if (!selectedSeller) {
+          return;
+        }
+
+        document.querySelectorAll(".seller-card").forEach((card) => {
+          card.classList.remove("border-blue-500", "bg-blue-50");
+          card.classList.add("border-gray-200");
+        });
+
+        const selectedCard = document.querySelector(
+          `[data-seller-id="${sellerId}"]`
+        );
+        selectedCard.classList.add("border-blue-500", "bg-blue-50");
+        selectedCard.classList.remove("border-gray-200");
+
+        const amount = parseFloat(document.getElementById("buy-amount").value);
+        const cost = amount * selectedSeller.price;
+        const gridCost = amount * currentGridPrice;
+        const savings = gridCost - cost;
+
+        document.getElementById(
+          "buy-total-cost"
+        ).textContent = `$${cost.toFixed(2)}`;
+        document.getElementById(
+          "buy-savings"
+        ).textContent = `$${savings.toFixed(2)} saved`;
+        document.getElementById("selected-seller").style.display = "flex";
+
+        const confirmBtn = document.getElementById("confirm-buy-btn");
+        confirmBtn.disabled = false;
+        confirmBtn.textContent = "Confirm Buy";
+      }
+
+      function toggleSearch() {
+        const searchBar = document.getElementById("search-bar");
+        if (searchBar.style.display === "none") {
+          searchBar.style.display = "block";
+          document.getElementById("market-search").focus();
+        } else {
+          searchBar.style.display = "none";
+        }
+      }
+
+      function filterSellersView(type) {
+        ["all", "nearby", "verified"].forEach((t) => {
+          const btn = document.getElementById(`filter-${t}`);
+          if (btn) {
+            btn.className =
+              "text-xs px-3 py-1 rounded-full bg-gray-100 text-gray-600 font-medium";
+          }
+        });
+
+        const selectedBtn = document.getElementById(`filter-${type}`);
+        if (selectedBtn) {
+          selectedBtn.className =
+            "text-xs px-3 py-1 rounded-full bg-blue-100 text-blue-700 font-medium";
+        }
+
+        document
+          .querySelectorAll("#available-sources > .card")
+          .forEach((card) => {
+            const distance = parseFloat(card.dataset.distance || "0");
+            const isVerified = card.dataset.verified === "true";
+
+            let show = true;
+            if (type === "nearby") {
+              show = distance <= 1.0;
+            } else if (type === "verified") {
+              show = isVerified;
+            }
+
+            card.style.display = show ? "" : "none";
+          });
+
+        if (mapMarkers.length) {
+          mapMarkers.forEach(({ marker, seller }) => {
+            let showMarker = true;
+            if (type === "nearby") {
+              showMarker = seller.distance <= 1.0;
+            } else if (type === "verified") {
+              showMarker = seller.verified;
+            }
+
+            const markerEl = marker.getElement();
+            if (markerEl) {
+              markerEl.style.display = showMarker ? "block" : "none";
+            }
+
+            if (!showMarker) {
+              marker.closePopup();
+            }
+          });
+        }
+
+        marketMap && setTimeout(() => marketMap.invalidateSize(), 200);
+      }
+
+      function showSellerModal(sellerId) {
+        currentSellerId = sellerId;
+        const seller = sellers.find((s) => s.id === sellerId);
+        if (!seller) {
+          return;
+        }
+
+        const advantageValue = (
+          ((currentGridPrice - seller.price) / currentGridPrice) *
+          100
+        ).toFixed(1);
+        const advantageText =
+          advantageValue > 0
+            ? `${advantageValue}% below market`
+            : advantageValue < 0
+            ? `${Math.abs(advantageValue)}% above market`
+            : "Matches market";
+
+        document.getElementById("seller-modal-name").textContent = seller.name;
+        document.getElementById("seller-modal-type").textContent = seller.type;
+        document.getElementById(
+          "seller-modal-distance"
+        ).textContent = `${seller.distance} mi`;
+        document.getElementById(
+          "seller-modal-price"
+        ).textContent = `$${seller.price.toFixed(2)}/kWh`;
+        document.getElementById(
+          "seller-modal-available"
+        ).textContent = `${seller.available} kWh`;
+        document.getElementById("seller-modal-advantage").textContent =
+          advantageText;
+
+        const badgesContainer = document.getElementById("seller-modal-badges");
+        badgesContainer.innerHTML = seller.tags
+          .map((badge) => {
+            let color = "blue";
+            if (badge.toLowerCase().includes("verify")) color = "blue";
+            if (badge.toLowerCase().includes("fast")) color = "emerald";
+            if (badge.toLowerCase().includes("24/7")) color = "purple";
+            if (badge.toLowerCase().includes("premium")) color = "purple";
+            return `<span class="text-xs bg-${color}-100 text-${color}-700 px-3 py-1 rounded-full">${badge}</span>`;
+          })
+          .join("");
+
+        const amountInput = document.getElementById("seller-buy-amount");
+        if (amountInput) {
+          const defaultAmount = Math.min(10, seller.available);
+          const formatted = Number.isInteger(defaultAmount)
+            ? defaultAmount.toFixed(0)
+            : defaultAmount.toFixed(1);
+          amountInput.value = formatted;
+        }
+
+        updateSellerPurchaseDetails();
+        document.getElementById("sellerModal").classList.add("active");
+      }
+
+      function closeSellerModal() {
+        document.getElementById("sellerModal").classList.remove("active");
+      }
+
+      function updateSellerPurchaseDetails() {
+        const amountInput = document.getElementById("seller-buy-amount");
+        const totalEl = document.getElementById("seller-buy-total");
+        const savingsEl = document.getElementById("seller-buy-savings");
+
+        if (!amountInput || !totalEl || !savingsEl) {
+          return;
+        }
+
+        const seller = sellers.find((s) => s.id === currentSellerId);
+        if (!seller) {
+          totalEl.textContent = "$0.00";
+          savingsEl.textContent = "$0.00 saved";
+          return;
+        }
+
+        let amount = parseFloat(amountInput.value || "0");
+        if (Number.isNaN(amount) || amount <= 0) {
+          amount = 0;
+        }
+        if (amount > seller.available) {
+          amount = seller.available;
+          const formatted = Number.isInteger(amount)
+            ? amount.toFixed(0)
+            : amount.toFixed(1);
+          amountInput.value = formatted;
+        }
+
+        const cost = amount * seller.price;
+        totalEl.textContent = `$${cost.toFixed(2)}`;
+
+        if (amount === 0) {
+          savingsEl.textContent = "$0.00 saved";
+          return;
+        }
+
+        const savings = (currentGridPrice - seller.price) * amount;
+        savingsEl.textContent =
+          savings >= 0
+            ? `$${savings.toFixed(2)} saved`
+            : `$${Math.abs(savings).toFixed(2)} above grid`;
+      }
+
+      function buyFromSeller() {
+        const seller = sellers.find((s) => s.id === currentSellerId);
+        if (!seller) {
+          return;
+        }
+
+        const amountInput = document.getElementById("seller-buy-amount");
+        const amount = parseFloat(amountInput?.value || "0");
+
+        if (!amount || amount <= 0) {
+          alert("Please enter a valid amount to purchase.");
+          return;
+        }
+        if (amount > seller.available) {
+          alert(
+            `Requested amount exceeds seller availability (${seller.available} kWh).`
+          );
+          return;
+        }
+
+        const cost = amount * seller.price;
+        closeSellerModal();
+        alert(
+          `✅ Purchase confirmed!\n${amount.toFixed(1)} kWh from ${
+            seller.name
+          }\nTotal: $${cost.toFixed(2)}`
+        );
+      }
+
+      function toggleSwitch(element) {
+        element.classList.toggle("active");
+      }
+    </script>
+  </body>
+</html>
