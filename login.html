@@ -234,6 +234,18 @@
     </div>
 
     <script>
+      const emailInput = document.getElementById("email");
+      if (emailInput) {
+        emailInput.addEventListener("invalid", (event) => {
+          event.target.setCustomValidity(
+            "Please enter a valid email address (e.g. name@example.com)."
+          );
+        });
+        emailInput.addEventListener("input", (event) => {
+          event.target.setCustomValidity("");
+        });
+      }
+
       function handleLogin(event) {
         event.preventDefault();
         const email = document.getElementById("email").value;
